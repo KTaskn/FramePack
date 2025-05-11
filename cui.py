@@ -335,8 +335,8 @@ args = parser.parse_args()
 print(args)
 
 input_image = np.array(Image.open(args.image_path).convert('RGB'))
-# prompt = "People smile and say hello at the camera.The texture is not changed."
-prompt = "People makes eye contact with the camera.The texture is not changed."
+# prompt = "The human subjects talk to the photographer and to each other. Input image quality is maintained as is."
+prompt = "The human subjects speaks in the direction of the camera. The input image quality is maintained as is."
 n_prompt = ""
 seed = np.random.randint(0, 2**32) if args.seed == -1 else args.seed
 total_second_length = args.second
