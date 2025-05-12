@@ -365,26 +365,27 @@ def handler(event):
     )
 
     # upload file
-    with open(output_filename, "rb") as f:
-        endpoint = os.environ["APP_ENDPOINT"]
-        auth_key = os.environ["AUTH_KEY"]
-        token = jwt.encode({ "userId": 123, "role": 'admin' }, auth_key, algorithm="HS256")
-        url = urljoin(endpoint, id)
-        files = {
-            'file': (output_filename, f, 'video/mp4')
-        }
-        response = requests.post(
-            url,
-            files, 
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/octet-stream",
-            }
-        )
-        if response.status_code == 200:
-            print("File uploaded successfully")
-        else:
-            print("File upload failed")
+    endpoint = os.environ["APP_ENDPOINT"]
+    auth_key = os.environ["AUTH_KEY"]
+    token = jwt.encode({ "userId": 123, "role": 'admin' }, auth_key, algorithm="HS256")
+    url = urljoin(endpoint, id)
+    payload = {}
+    files={'file':
+            (
+                os.path.basename(output_filename),
+                open(output_filename, 'rb'),
+                'video/mp4'
+            )
+    }
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.post(url, headers=headers, data=payload, files=files)
+    if response.status_code == 200:
+        print("File uploaded successfully")
+    else:
+        print("File upload failed")
 
     ret = {
         "query": query,
