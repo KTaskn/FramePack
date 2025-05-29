@@ -5,6 +5,7 @@ import os
 # os.environ['HF_HOME'] = os.path.abspath(os.path.realpath(os.path.join(os.path.dirname(__file__), './hf_download')))
 os.environ["HF_HOME"] = "/runpod-volume/FramePack/hf_download"
 
+import uuid
 from urllib.parse import urljoin
 import runpod
 import gradio as gr
@@ -20,7 +21,8 @@ import io
 from jose import jwt
 
 import requests
-
+from moviepy import VideoFileClip, ImageClip, CompositeVideoClip
+import shutil
 from PIL import Image
 from diffusers import AutoencoderKLHunyuanVideo
 from transformers import LlamaModel, CLIPTextModel, LlamaTokenizerFast, CLIPTokenizer
@@ -335,6 +337,23 @@ def process(input_image, prompt, n_prompt, seed, total_second_length, latent_win
             print("end")
             return output_filename
 
+def add_watermark(input_video, watermark_image):
+    video = VideoFileClip(input_video)
+
+    video_width, video_height = video.size
+    clip = ImageClip(watermark_image).with_duration(
+        video.duration
+    ).with_position('center').with_opacity(0.1).resized((video_width, video_height)) 
+
+    tmp_path_video = os.path.join("/tmp", f"{uuid.uuid4()}.mp4")
+    final_video = CompositeVideoClip([video, clip])
+    final_video.write_videofile(tmp_path_video, codec="libx264")
+
+    video.close()
+    final_video.close()
+
+    # final_videoをvideoに置き換え
+    shutil.move(tmp_path_video, input_video)
 
 def handler(event):
     event_input = event["input"]
@@ -363,6 +382,7 @@ def handler(event):
     output_filename = process(
         input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf
     )
+    add_watermark(output_filename, "./watermark.png")
 
     # upload file
     endpoint = os.environ["APP_ENDPOINT"]
